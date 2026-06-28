@@ -1,0 +1,3 @@
+import { NextRequest, NextResponse } from "next/server"; import { connectDB } from "@/lib/db"; import { getSession } from "@/lib/auth"; import { Material } from "@/models/Material";
+export async function GET(req:NextRequest){await connectDB();const q=req.nextUrl.searchParams.get("q")?.slice(0,80);const filter=q?{$text:{$search:q},status:"published"}:{status:"published"};return NextResponse.json(await Material.find(filter).limit(30).lean())}
+export async function POST(req:NextRequest){const session=await getSession();if(!session||session.role==="order_manager")return NextResponse.json({error:"Forbidden"},{status:403});await connectDB();const body=await req.json();const row=await Material.create(body);return NextResponse.json(row,{status:201})}

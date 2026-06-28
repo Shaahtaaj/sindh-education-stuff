@@ -1,0 +1,3 @@
+import { PageHero } from "@/components/PageHero"; import { MaterialListing } from "@/components/MaterialListing";
+type Props={params:Promise<{code:string}>}; export async function generateMetadata({params}:Props){const {code}=await params;return {title:`Course ${code}`,description:`Study resources and guidance for AIOU course ${code}.`}}
+export default async function Page({params}:Props){const {code}=await params;return <><PageHero title={`Course ${code}`} description={`Browse current study guidance, templates and academic-support resources associated with AIOU course ${code}.`}/><section className="section"><div className="container-site"><MaterialListing/></div></section></>}

@@ -1,0 +1,3 @@
+import { BlogCard } from "@/components/BlogCard"; import { PageHero } from "@/components/PageHero"; import { posts } from "@/data/content";
+export const metadata={title:"Education Blog",description:"Practical articles about AIOU assignments, research and teaching practice."};
+export default function Page(){return <><PageHero title="Study guidance blog" description="Practical articles for students who want to plan better, write clearly and make responsible academic decisions."/><section className="section"><div className="container-site max-w-4xl">{posts.map(x=><BlogCard key={x.slug} post={x}/>)}</div></section></>}

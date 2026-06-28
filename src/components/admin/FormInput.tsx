@@ -1,0 +1,1 @@
+export function FormInput({label,...props}:React.InputHTMLAttributes<HTMLInputElement>&{label:string}){return <label className="grid gap-2 text-sm font-bold text-[#0b1f3a]">{label}<input {...props} className="focus-ring rounded-xl border border-[#d4dde5] px-4 py-3 font-normal"/></label>}
