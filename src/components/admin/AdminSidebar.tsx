@@ -14,12 +14,15 @@ const groups = [
 
 export function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const path = usePathname();
-  return <aside className={cn("h-dvh w-[278px] shrink-0 overflow-y-auto bg-[#0b1f3a] px-4 py-5",mobile ? "block" : "sticky top-0 hidden lg:flex lg:flex-col")}>
-    <div className="px-3 py-1"><Logo inverse/></div>
-    <nav className="mt-7 flex-1 space-y-6">
+  return <aside className={cn("h-dvh w-[278px] shrink-0 overflow-y-auto border-r border-white/[.06] bg-[#0b1f3a] px-4 py-5 shadow-[8px_0_30px_rgba(5,20,38,.08)]",mobile ? "block" : "sticky top-0 hidden lg:flex lg:flex-col")}>
+    <div className="border-b border-white/[.08] px-3 pb-5 pt-1"><Logo inverse/></div>
+    <nav className="mt-5 flex-1 space-y-5">
       {groups.map(group => <div key={group.label}>
-        <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[.16em] text-[#7f91a8]">{group.label}</p>
-        <div className="space-y-1">{group.links.map(([label,href,Icon]) => <Link onClick={onNavigate} key={href} href={href} className={cn("group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-[#cbd5e1] transition hover:bg-white/[.07] hover:text-white", path === href && "bg-[#147a4b] text-white shadow-[0_8px_22px_rgba(0,0,0,.2)]")}><Icon size={17} className={cn("shrink-0 text-[#8fa2b9] transition group-hover:text-white",path===href&&"text-white")}/><span className="flex-1">{label}</span>{path===href ? <span className="size-1.5 rounded-full bg-white"/> : null}</Link>)}</div>
+        <p className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[.17em]" style={{color:"#91a4bb"}}>{group.label}</p>
+        <div className="space-y-1">{group.links.map(([label,href,Icon]) => {
+          const active=path===href;
+          return <Link onClick={onNavigate} key={href} href={href} aria-current={active?"page":undefined} style={{color:active?"#ffffff":"#d7e0ea",backgroundColor:active?"#147a4b":undefined}} className={cn("group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors hover:bg-white/[.09]",active&&"shadow-[0_8px_22px_rgba(0,0,0,.22)]")}><span className={cn("grid size-8 shrink-0 place-items-center rounded-lg transition-colors",active?"bg-white/[.14]":"bg-transparent group-hover:bg-white/[.08]")}><Icon size={17} style={{color:active?"#ffffff":"#9fb1c5"}}/></span><span className="flex-1" style={{color:active?"#ffffff":"#d7e0ea"}}>{label}</span>{active ? <span className="size-1.5 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,.12)]"/> : null}</Link>;
+        })}</div>
       </div>)}
     </nav>
     <div className="mt-7 rounded-2xl border border-white/10 bg-white/[.055] p-4">
