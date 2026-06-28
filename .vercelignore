@@ -1,0 +1,10 @@
+.next
+node_modules
+.git
+.agents
+.codex
+storage
+tmp
+uploads
+public/uploads
+*.log

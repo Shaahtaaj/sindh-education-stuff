@@ -1,3 +1,4 @@
-import { FAQAccordion } from "@/components/FAQAccordion"; import { PageHero } from "@/components/PageHero"; import { faqs } from "@/data/content";
+import { FAQAccordion } from "@/components/FAQAccordion"; import { PageHero } from "@/components/PageHero"; import { getPublicGeneric } from "@/lib/public-content";
 export const metadata={title:"Frequently Asked Questions",description:"Answers about resources, orders and independent academic support."};
-export default function Page(){return <><PageHero title="Frequently asked questions" description="Straight answers about our role, responsible use, resources, files and orders."/><section className="section"><div className="container-site max-w-4xl"><FAQAccordion items={faqs}/></div></section></>}
+export const dynamic="force-dynamic";
+export default async function Page(){const rows=await getPublicGeneric("faqs");const faqs=rows.map(row=>({question:row.values[0]??"",answer:row.values[1]??""})).filter(item=>item.question&&item.answer);return <><PageHero title="Frequently asked questions" description="Straight answers about our role, responsible use, resources, files and orders."/><section className="section"><div className="container-site max-w-4xl">{faqs.length?<FAQAccordion items={faqs}/>:<p className="py-16 text-center text-[#607086]">No published FAQs yet.</p>}</div></section></>}
