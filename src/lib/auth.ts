@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
+export const COOKIE_NAME = "admin_token";
+
 type AdminSession = {
   id: string;
   email: string;
@@ -9,7 +11,7 @@ type AdminSession = {
 
 export async function getSession(): Promise<AdminSession | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get("admin_token")?.value;
+  const token = cookieStore.get(COOKIE_NAME)?.value;
 
   if (!token) {
     return null;
