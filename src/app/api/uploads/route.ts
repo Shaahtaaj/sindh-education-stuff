@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
+import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
 
 const allowed = new Map([
@@ -19,7 +20,30 @@ export async function POST(req: NextRequest) {
   if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: "File must be 5 MB or smaller." }, { status: 413 });
   const extension = allowed.get(file.type);
   if (!extension) return NextResponse.json({ error: "Unsupported file type." }, { status: 415 });
-  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "Persistent upload storage is not configured." }, { status: 503 });
+
+  if (isCloudinaryConfigured()) {
+    try {
+      const isImage = file.type.startsWith("image/");
+      const uploaded = await uploadToCloudinary(
+        file,
+        isImage ? "sindh-education-stuff/thumbnails" : "sindh-education-stuff/resources",
+        isImage ? "image" : "raw"
+      );
+      return NextResponse.json({
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
+        resourceType: uploaded.resource_type,
+      }, { status: 201 });
+    } catch (error) {
+      console.error("Cloudinary upload failed:", error);
+      return NextResponse.json({ error: "Cloud upload failed. Please try again." }, { status: 502 });
+    }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Cloudinary credentials are not configured." }, { status: 503 });
+  }
+
   const directory = path.join(process.cwd(), "public", "uploads");
   await mkdir(directory, { recursive: true });
   const filename = `${randomUUID()}${extension}`;

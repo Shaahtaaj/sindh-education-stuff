@@ -44,14 +44,23 @@ function DropField({label,accept,file,onFile,existingName,kind}:{label:string;ac
   return <div><p className="mb-2 text-xs font-extrabold uppercase tracking-[.06em] text-[#53657a]">{label}</p><button type="button" onClick={()=>input.current?.click()} onDragOver={event=>{event.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={event=>{event.preventDefault();setDragging(false);onFile(event.dataTransfer.files[0]??null)}} className={`flex w-full items-center gap-4 rounded-2xl border-2 border-dashed p-5 text-left transition ${dragging?"border-[#147a4b] bg-[#eaf6ef]":"border-[#cfd9e1] bg-[#f8fafb] hover:border-[#92bda3] hover:bg-[#f3f9f5]"}`}><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-[#147a4b] shadow-sm">{name?<Icon size={21}/>:<UploadCloud size={21}/>}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-[#0b1f3a]">{name||`Drop ${kind==="image"?"an image":"a file"} here or browse`}</span><span className="mt-1 block text-xs text-[#718094]">{kind==="image"?"PNG or JPG · max 5 MB":"PDF, DOC, DOCX, PNG or JPG · max 5 MB"}</span></span>{name?<span onClick={event=>{event.stopPropagation();onFile(null)}} className="grid size-8 place-items-center rounded-lg text-[#8a5960] hover:bg-red-50"><X size={16}/></span>:null}<input ref={input} className="hidden" type="file" accept={accept} onChange={event=>onFile(event.target.files?.[0]??null)}/></button></div>;
 }
 
+async function readApiResponse<T>(response:Response):Promise<T> {
+  const contentType=response.headers.get("content-type")??"";
+  if(contentType.includes("application/json"))return response.json() as Promise<T>;
+  const text=await response.text();
+  const preview=text.replace(/\s+/g," ").trim().slice(0,200);
+  throw new Error(`Server returned ${response.status} ${response.statusText || "error"} instead of JSON${preview?`: ${preview}`:"."}`);
+}
+
 async function uploadFile(file:File|null) {
   if(!file)return "";
   if(file.size>5*1024*1024)throw new Error(`${file.name} exceeds the 5 MB limit.`);
   const body=new FormData();body.set("file",file);
   const response=await fetch("/api/uploads",{method:"POST",body});
-  const result=await response.json();
+  const result=await readApiResponse<{url?:string;error?:string}>(response);
   if(!response.ok)throw new Error(result.error??`Unable to upload ${file.name}.`);
-  return result.url as string;
+  if(!result.url)throw new Error(`Upload completed without a file URL for ${file.name}.`);
+  return result.url;
 }
 
 export function MaterialStudio() {
@@ -71,7 +80,7 @@ export function MaterialStudio() {
   const [courseRecords,setCourseRecords]=useState<{code:string;name:string;program:string;semester:string;status:string}[]>([]);
   const [semesters,setSemesters]=useState<string[]>([]);
 
-  useEffect(()=>{let active=true;async function load(){const responses=await Promise.all(["/api/admin/materials","/api/admin/programs","/api/admin/courses","/api/admin/semesters"].map(url=>fetch(url,{cache:"no-store"})));const bodies=await Promise.all(responses.map(response=>response.json()));if(!active)return;if(responses[0].ok)setRecords(bodies[0] as MaterialRecord[]);else setError(bodies[0].error??"Unable to load materials.");setPrograms((bodies[1] as {values:string[]}[]).map(row=>row.values[0]).filter(Boolean));setCourseRecords((bodies[2] as {values:string[]}[]).map(row=>({code:row.values[0]??"",name:row.values[1]??"",program:row.values[2]??"",semester:row.values[3]??"",status:row.values[4]??""})).filter(course=>course.code&&course.status!=="Inactive"));setSemesters((bodies[3] as {values:string[]}[]).map(row=>row.values[0]).filter(Boolean));setLoading(false)}void load();return()=>{active=false}},[]);
+  useEffect(()=>{let active=true;async function load(){try{const responses=await Promise.all(["/api/admin/materials","/api/admin/programs","/api/admin/courses","/api/admin/semesters"].map(url=>fetch(url,{cache:"no-store"})));const bodies=await Promise.all(responses.map(response=>readApiResponse<unknown>(response)));if(!active)return;if(responses[0].ok)setRecords(bodies[0] as MaterialRecord[]);else setError((bodies[0] as {error?:string}).error??"Unable to load materials.");setPrograms((bodies[1] as {values:string[]}[]).map(row=>row.values[0]).filter(Boolean));setCourseRecords((bodies[2] as {values:string[]}[]).map(row=>({code:row.values[0]??"",name:row.values[1]??"",program:row.values[2]??"",semester:row.values[3]??"",status:row.values[4]??""})).filter(course=>course.code&&course.status!=="Inactive"));setSemesters((bodies[3] as {values:string[]}[]).map(row=>row.values[0]).filter(Boolean))}catch(problem){if(active)setError(problem instanceof Error?problem.message:"Unable to load admin data.")}finally{if(active)setLoading(false)}}void load();return()=>{active=false}},[]);
   const availableCourses=useMemo(()=>courseRecords.filter(course=>(!draft.program||course.program===draft.program)&&(!draft.semester||course.semester===draft.semester)).map(course=>`${course.code} — ${course.name}`),[courseRecords,draft.program,draft.semester]);
 
   const filtered=useMemo(()=>records.filter(record=>{
@@ -82,7 +91,7 @@ export function MaterialStudio() {
   function update<K extends keyof MaterialRecord>(key:K,value:MaterialRecord[K]){setDraft(current=>({...current,[key]:value}))}
   function openNew(){const record=emptyRecord();record.program=programs[0]??"";record.semester=semesters[0]??"";const firstCourse=courseRecords.find(course=>(!record.program||course.program===record.program)&&(!record.semester||course.semester===record.semester));record.course=firstCourse?`${firstCourse.code} — ${firstCourse.name}`:"";setDraft(record);setDocumentFile(null);setThumbnailFile(null);setError("");setEditor(true)}
   function openEdit(record:MaterialRecord){setDraft({...record});setDocumentFile(null);setThumbnailFile(null);setError("");setEditor(true)}
-  async function remove(record:MaterialRecord){if(!window.confirm(`Delete “${record.title}”?`))return;const response=await fetch(`/api/admin/materials?id=${encodeURIComponent(record.id)}`,{method:"DELETE"});if(!response.ok){const body=await response.json();setError(body.error??"Unable to delete material.");return}setRecords(current=>current.filter(item=>item.id!==record.id));setNotice("Material deleted.")}
+  async function remove(record:MaterialRecord){if(!window.confirm(`Delete “${record.title}”?`))return;try{const response=await fetch(`/api/admin/materials?id=${encodeURIComponent(record.id)}`,{method:"DELETE"});const body=await readApiResponse<{error?:string}>(response);if(!response.ok)throw new Error(body.error??"Unable to delete material.");setRecords(current=>current.filter(item=>item.id!==record.id));setNotice("Material deleted.")}catch(problem){setError(problem instanceof Error?problem.message:"Unable to delete material.")}}
 
   async function save(event:React.FormEvent){
     event.preventDefault();setError("");
@@ -93,7 +102,7 @@ export function MaterialStudio() {
       const [newFileUrl,newThumbnailUrl]=await Promise.all([uploadFile(documentFile),uploadFile(thumbnailFile)]);
       const saved={...draft,id:draft.id||crypto.randomUUID(),fileUrl:newFileUrl||draft.fileUrl,fileName:documentFile?.name||draft.fileName,thumbnailUrl:newThumbnailUrl||draft.thumbnailUrl,updatedAt:new Intl.DateTimeFormat("en-PK",{day:"numeric",month:"short",year:"numeric"}).format(new Date())};
       const response=await fetch("/api/admin/materials",{method:draft.id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(saved)});
-      const body=await response.json();if(!response.ok)throw new Error(body.error??"Unable to save material.");
+      const body=await readApiResponse<MaterialRecord&{error?:string}>(response);if(!response.ok)throw new Error(body.error??"Unable to save material.");
       const stored=body as MaterialRecord;
       setRecords(current=>draft.id?current.map(record=>record.id===draft.id?stored:record):[stored,...current]);
       setEditor(false);setNotice(draft.id?"Material updated successfully.":"Material added successfully.");
