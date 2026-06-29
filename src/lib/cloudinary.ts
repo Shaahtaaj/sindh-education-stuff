@@ -15,6 +15,24 @@ export function isCloudinaryConfigured() {
   );
 }
 
+export function createCloudinaryUploadSignature(folder: string) {
+  if (!isCloudinaryConfigured()) {
+    throw new Error("Cloudinary credentials are not configured.");
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  return {
+    timestamp,
+    folder,
+    signature: cloudinary.utils.api_sign_request(
+      { folder, timestamp },
+      process.env.CLOUDINARY_API_SECRET!
+    ),
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+    apiKey: process.env.CLOUDINARY_API_KEY!,
+  };
+}
+
 export async function uploadToCloudinary(
   file: File,
   folder: string,

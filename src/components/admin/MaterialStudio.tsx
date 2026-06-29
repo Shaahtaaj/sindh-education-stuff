@@ -55,12 +55,26 @@ async function readApiResponse<T>(response:Response):Promise<T> {
 async function uploadFile(file:File|null) {
   if(!file)return "";
   if(file.size>5*1024*1024)throw new Error(`${file.name} exceeds the 5 MB limit.`);
-  const body=new FormData();body.set("file",file);
-  const response=await fetch("/api/uploads",{method:"POST",body});
-  const result=await readApiResponse<{url?:string;error?:string}>(response);
-  if(!response.ok)throw new Error(result.error??`Unable to upload ${file.name}.`);
-  if(!result.url)throw new Error(`Upload completed without a file URL for ${file.name}.`);
-  return result.url;
+  const kind=file.type.startsWith("image/")?"image":"document";
+  const signatureResponse=await fetch("/api/uploads/signature",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({kind})
+  });
+  const signed=await readApiResponse<{timestamp:number;folder:string;signature:string;cloudName:string;apiKey:string;resourceType:"image"|"raw";error?:string}>(signatureResponse);
+  if(!signatureResponse.ok)throw new Error(signed.error??"Unable to authorize file upload.");
+
+  const body=new FormData();
+  body.set("file",file);
+  body.set("timestamp",String(signed.timestamp));
+  body.set("folder",signed.folder);
+  body.set("signature",signed.signature);
+  body.set("api_key",signed.apiKey);
+  const cloudResponse=await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(signed.cloudName)}/${signed.resourceType}/upload`,{method:"POST",body});
+  const result=await readApiResponse<{secure_url?:string;error?:{message?:string}}>(cloudResponse);
+  if(!cloudResponse.ok)throw new Error(result.error?.message??`Unable to upload ${file.name}.`);
+  if(!result.secure_url)throw new Error(`Upload completed without a file URL for ${file.name}.`);
+  return result.secure_url;
 }
 
 export function MaterialStudio() {
