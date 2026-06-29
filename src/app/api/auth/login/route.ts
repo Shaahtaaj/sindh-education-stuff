@@ -1,2 +1,79 @@
-import { NextRequest, NextResponse } from "next/server"; import bcrypt from "bcryptjs"; import { connectDB } from "@/lib/db"; import { COOKIE_NAME, createToken } from "@/lib/auth"; import { loginSchema } from "@/lib/validations"; import { rateLimit } from "@/lib/rate-limit"; import { User } from "@/models/User";
-export async function POST(req:NextRequest){const ip=req.headers.get("x-forwarded-for")?.split(",")[0]??"unknown";if(!rateLimit(`login:${ip}`,5,15*60_000).allowed)return NextResponse.json({error:"Too many login attempts. Try again later."},{status:429});const parsed=loginSchema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Invalid credentials."},{status:400});let user:null|{_id:string;email:string;passwordHash:string;role:"super_admin"|"editor"|"order_manager";status:string}=null;try{await connectDB();user=await User.findOne({email:parsed.data.email.toLowerCase()}).lean()}catch{const email=process.env.ADMIN_EMAIL;const password=process.env.ADMIN_PASSWORD;if(email&&password&&parsed.data.email===email){user={_id:"environment-admin",email,passwordHash:await bcrypt.hash(password,10),role:"super_admin",status:"active"}}}if(!user||user.status!=="active"||!(await bcrypt.compare(parsed.data.password,user.passwordHash)))return NextResponse.json({error:"Invalid credentials."},{status:401});const token=await createToken({sub:String(user._id),email:user.email,role:user.role});const res=NextResponse.json({ok:true});res.cookies.set(COOKIE_NAME,token,{httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"lax",maxAge:8*60*60,path:"/"});return res}
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { connectDB } from "@/lib/db";
+import { User } from "@/models/User";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const { email, password } = await req.json();
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, message: "Email and password are required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findOne({ email, status: "active" });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Invalid login details" },
+        { status: 401 }
+      );
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isPasswordCorrect) {
+      return NextResponse.json(
+        { success: false, message: "Invalid login details" },
+        { status: 401 }
+      );
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "7d" }
+    );
+
+    const response = NextResponse.json({
+      success: true,
+      message: "Login successful",
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
+    response.cookies.set("admin_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Login failed",
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
