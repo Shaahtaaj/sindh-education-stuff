@@ -5,6 +5,6 @@ node_modules
 .codex
 storage
 tmp
-uploads
+/uploads/
 public/uploads
 *.log
