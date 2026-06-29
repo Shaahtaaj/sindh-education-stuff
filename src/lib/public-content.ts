@@ -6,7 +6,7 @@ import { readLocalCollection } from "./local-store";
 export type PublicMaterial={
   id:string;title:string;slug:string;program:string;course:string;courseCode:string;
   semester:string;category:string;type:string;language:string;description:string;
-  content:string;fileUrl:string;thumbnailUrl:string;isFree:boolean;price:number;
+  content:string;files:{name:string;url:string}[];fileUrl:string;thumbnailUrl:string;isFree:boolean;price:number;
   tags:string[];seoTitle:string;metaDescription:string;downloads:number;status:string;updatedAt:string;
 };
 export type PublicBlog={
@@ -24,7 +24,10 @@ export async function getPublicMaterials():Promise<PublicMaterial[]>{
   const rows=await rawCollection<Record<string,unknown>>("admin_materials","admin-materials");
   return rows.filter(row=>row.status==="Published").map(row=>{
     const course=String(row.course??"");
-    return {id:String(row.id??""),title:String(row.title??""),slug:String(row.slug??""),program:String(row.program??""),course,courseCode:course.split(" — ")[0]||"General",semester:String(row.semester??""),category:String(row.category??""),type:String(row.type??""),language:String(row.language??""),description:String(row.description??""),content:String(row.content??""),fileUrl:String(row.fileUrl??""),thumbnailUrl:String(row.thumbnailUrl??""),isFree:row.access==="Free",price:Number(row.price)||0,tags:String(row.tags??"").split(",").map(tag=>tag.trim()).filter(Boolean),seoTitle:String(row.seoTitle??""),metaDescription:String(row.metaDescription??""),downloads:Number(row.downloads)||0,status:String(row.status??""),updatedAt:String(row.updatedAt??row.createdAt??new Date().toISOString())};
+    const legacyUrl=String(row.fileUrl??"");
+    const files=Array.isArray(row.files)?row.files.flatMap(file=>{if(!file||typeof file!=="object")return[];const value=file as Record<string,unknown>;const url=String(value.url??"");return url?[{name:String(value.name??"Download"),url}]:[]}):[];
+    if(!files.length&&legacyUrl)files.push({name:String(row.fileName??"Download"),url:legacyUrl});
+    return {id:String(row.id??""),title:String(row.title??""),slug:String(row.slug??""),program:String(row.program??""),course,courseCode:course.split(" — ")[0]||"General",semester:String(row.semester??""),category:String(row.category??""),type:String(row.type??""),language:String(row.language??""),description:String(row.description??""),content:String(row.content??""),files,fileUrl:files[0]?.url??legacyUrl,thumbnailUrl:String(row.thumbnailUrl??""),isFree:row.access==="Free",price:Number(row.price)||0,tags:String(row.tags??"").split(",").map(tag=>tag.trim()).filter(Boolean),seoTitle:String(row.seoTitle??""),metaDescription:String(row.metaDescription??""),downloads:Number(row.downloads)||0,status:String(row.status??""),updatedAt:String(row.updatedAt??row.createdAt??new Date().toISOString())};
   });
 }
 export async function getPublicMaterial(slug:string){return (await getPublicMaterials()).find(item=>item.slug===slug)}
