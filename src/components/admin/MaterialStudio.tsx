@@ -49,17 +49,17 @@ async function readApiResponse<T>(response:Response):Promise<T> {
   if(contentType.includes("application/json"))return response.json() as Promise<T>;
   const text=await response.text();
   const preview=text.replace(/\s+/g," ").trim().slice(0,200);
-  throw new Error(`Server returned ${response.status} ${response.statusText || "error"} instead of JSON${preview?`: ${preview}`:"."}`);
+  throw new Error(`${response.url} returned ${response.status} ${response.statusText || "error"} instead of JSON${preview?`: ${preview}`:"."}`);
 }
 
 async function uploadFile(file:File|null) {
   if(!file)return "";
   if(file.size>5*1024*1024)throw new Error(`${file.name} exceeds the 5 MB limit.`);
   const kind=file.type.startsWith("image/")?"image":"document";
-  const signatureResponse=await fetch("/api/uploads/signature",{
+  const signatureResponse=await fetch("/api/uploads",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({kind})
+    body:JSON.stringify({action:"signature",kind})
   });
   const signed=await readApiResponse<{timestamp:number;folder:string;signature:string;cloudName:string;apiKey:string;resourceType:"image"|"raw";error?:string}>(signatureResponse);
   if(!signatureResponse.ok)throw new Error(signed.error??"Unable to authorize file upload.");
