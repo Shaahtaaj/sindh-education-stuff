@@ -14,12 +14,18 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: #fff; color: var(--ink); font-family: Arial, Helvetica, sans-serif; text-rendering: optimizeLegibility; }
+body { margin: 0; overflow-x: clip; background: #fff; color: var(--ink); font-family: Arial, Helvetica, sans-serif; text-rendering: optimizeLegibility; }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; text-decoration: none; }
 ::selection { background: #bce5cc; color: #0b1f3a; }
 
-.container-site { width: min(1180px, calc(100% - 2rem)); margin-inline: auto; }
+.container-site { width: min(1240px, calc(100% - 2rem)); margin-inline: auto; }
+.brand-serif { font-family: Georgia, "Times New Roman", serif; }
+.hero-surface {
+  background:
+    radial-gradient(circle at 82% 28%, rgba(11,107,66,.09), transparent 26%),
+    linear-gradient(180deg, #fff 0%, #fbfdfc 100%);
+}
 .section { padding-block: clamp(4rem, 8vw, 7rem); }
 .section-title { max-width: 760px; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.08; letter-spacing: -0.045em; font-weight: 800; color: var(--navy); }
 .section-copy { max-width: 680px; margin-top: 1rem; color: var(--muted); font-size: 1.075rem; line-height: 1.75; }
@@ -29,3 +35,23 @@ a { color: inherit; text-decoration: none; }
 .rich-content p, .rich-content li { color: #4d5d71; line-height: 1.8; }
 .rich-content ul, .rich-content ol { padding-left: 1.4rem; }
 .rich-content a { color: var(--green); text-decoration: underline; }
+
+.nav-link { transition: color 180ms ease; }
+.link-arrow svg { transition: transform 180ms ease; }
+.link-arrow:hover svg { transform: translateX(4px); }
+.mobile-menu { animation: menu-in 180ms ease-out both; transform-origin: top; }
+.reveal { animation: reveal-up 560ms cubic-bezier(.22,.75,.25,1) both; }
+.reveal-delay { animation-delay: 90ms; }
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-8px) scaleY(.98); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

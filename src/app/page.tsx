@@ -1,35 +1,45 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Download, FileCheck2, MessageSquareText, PenTool, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpenCheck, FileText, GraduationCap } from "lucide-react";
 import { Hero } from "@/components/Hero";
-import { CategoryCard } from "@/components/CategoryCard";
-import { MaterialCard } from "@/components/MaterialCard";
-import { BlogCard } from "@/components/BlogCard";
-import { FAQAccordion } from "@/components/FAQAccordion";
-import { categoryRoutes } from "@/lib/constants";
-import { getPublicBlogs, getPublicGeneric, getPublicMaterials } from "@/lib/public-content";
+import { getPublicMaterials } from "@/lib/public-content";
 
 export const dynamic="force-dynamic";
+
 export default async function Home() {
-  const [materials,posts,faqRows]=await Promise.all([getPublicMaterials(),getPublicBlogs(),getPublicGeneric("faqs")]);
-  const faqs=faqRows.map(row=>({question:row.values[0]??"",answer:row.values[1]??""})).filter(item=>item.question&&item.answer);
+  const materials=await getPublicMaterials();
+  const latest=materials.slice(0,3);
+
   return <>
     <Hero/>
-    <section className="section bg-[#f4f7f9]"><div className="container-site grid gap-12 lg:grid-cols-[.72fr_1.28fr]">
-      <div><h2 className="section-title">Find the right support for your next study task.</h2><p className="section-copy">Browse by the work you need to understand. Every area is organized around practical formats, clear language and responsible academic practice.</p></div>
-      <div className="grid gap-x-8 md:grid-cols-2">{categoryRoutes.map((item, i) => <CategoryCard key={item.href} {...item} index={i}/>)}</div>
-    </div></section>
-    <section className="section"><div className="container-site"><div className="flex flex-wrap items-end justify-between gap-5"><div><h2 className="section-title">Latest study guides</h2><p className="section-copy">Recently published material from our academic content team.</p></div><Link href="/resources" className="inline-flex items-center gap-2 font-bold text-[#147a4b]">Browse all resources <ArrowRight size={18}/></Link></div>{materials.length?<div className="mt-12 grid gap-9 md:grid-cols-2 lg:grid-cols-3">{materials.slice(0,3).map(item => <MaterialCard key={item.slug} item={item}/>)}</div>:<p className="mt-10 rounded-2xl bg-[#f4f7f9] p-8 text-center text-sm text-[#607086]">No published materials yet.</p>}</div></section>
-    <section className="border-y border-[#dfe6ec] bg-[#eaf6ef] py-12"><div className="container-site grid items-center gap-8 lg:grid-cols-[.55fr_1.45fr]"><div><h2 className="text-2xl font-extrabold tracking-[-.03em] text-[#0b1f3a]">Free downloads</h2><p className="mt-2 text-sm leading-6 text-[#607086]">Start with practical resources—no payment required.</p></div><div className="grid gap-3 md:grid-cols-3">{materials.filter(x=>x.isFree).slice(0,3).map(x=><Link key={x.slug} href={`/materials/${x.slug}`} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-4 text-sm font-bold text-[#0b1f3a] shadow-sm"><span>{x.courseCode} · {x.title.replace(x.courseCode,"").trim()}</span><Download size={17} className="shrink-0 text-[#147a4b]"/></Link>)}</div></div></section>
-    <section className="section bg-[#0b1f3a] text-white"><div className="container-site grid gap-14 lg:grid-cols-[1fr_1fr]">
-      <div><h2 className="max-w-xl text-[clamp(2.2rem,4vw,3.6rem)] font-extrabold leading-[1.05] tracking-[-.045em]">Need structured help with formatting and presentation?</h2><p className="mt-5 max-w-xl text-lg leading-8 text-slate-300">Share your course, deadline and the kind of guidance you need. We support planning, formatting, typing and presentation while keeping the academic work yours.</p><Link href="/order-help" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#21a667] px-6 py-4 font-bold text-white">Order Study Help <ArrowRight size={18}/></Link></div>
-      <div className="grid gap-5 sm:grid-cols-2">{[["Assignment formatting", PenTool],["Teaching practice support", FileCheck2],["Research 8613 guidance", MessageSquareText],["Responsible assistance", ShieldCheck]].map(([label, Icon]) => { const I = Icon as typeof PenTool; return <div key={label as string} className="border-t border-white/20 pt-5"><I className="text-[#55d393]" size={24}/><h3 className="mt-4 text-lg font-bold">{label as string}</h3><p className="mt-2 text-sm leading-6 text-slate-400">Clear communication, practical structure and no false official claims.</p></div>})}</div>
-    </div></section>
-    <section className="section"><div className="container-site grid items-center gap-14 lg:grid-cols-[.9fr_1.1fr]">
-      <div className="rounded-[2rem] bg-[#eaf6ef] p-8 md:p-12"><span className="text-7xl font-black tracking-[-.08em] text-[#147a4b]">8613</span><h3 className="mt-5 text-2xl font-extrabold text-[#0b1f3a]">Research becomes manageable when each decision is explicit.</h3><ul className="mt-6 space-y-4">{["Choose a practical, focused topic","Align questions, methods and tools","Write a clear proposal structure","Review formatting and references"].map(x => <li key={x} className="flex gap-3 text-sm font-semibold text-[#405169]"><CheckCircle2 size={19} className="shrink-0 text-[#147a4b]"/>{x}</li>)}</ul></div>
-      <div><h2 className="section-title">Research 8613 support, from topic choice to final review.</h2><p className="section-copy">Use our step-by-step guidance to understand the purpose of each research section and keep your project realistic, ethical and coherent.</p><Link href="/research-8613" className="mt-7 inline-flex items-center gap-2 font-bold text-[#147a4b]">Explore Research 8613 <ArrowRight size={18}/></Link></div>
-    </div></section>
-    <section className="section bg-[#f4f7f9]"><div className="container-site grid gap-14 lg:grid-cols-[.7fr_1.3fr]"><div><h2 className="section-title">Useful reading for distance learners.</h2><p className="section-copy">Articles published from Blog Studio.</p><Link href="/blog" className="mt-6 inline-flex items-center gap-2 font-bold text-[#147a4b]">Visit the blog <ArrowRight size={18}/></Link></div><div>{posts.length?posts.slice(0,3).map(post => <BlogCard key={post.slug} post={{...post,date:post.publishDate}}/>):<p className="rounded-2xl bg-white p-8 text-center text-sm text-[#607086]">No published articles yet.</p>}</div></div></section>
-    <section className="section"><div className="container-site grid gap-12 lg:grid-cols-[.75fr_1.25fr]"><div><h2 className="section-title">Student feedback, published responsibly.</h2><p className="section-copy">We publish only feedback that students have consented to share. Names may be shortened to protect privacy.</p></div><div className="rounded-[2rem] border border-dashed border-[#b9c7d2] bg-[#f8fafb] p-10 text-center"><MessageSquareText className="mx-auto text-[#147a4b]" size={30}/><h3 className="mt-4 text-xl font-extrabold text-[#0b1f3a]">Verified testimonials will appear here</h3><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[#607086]">No invented reviews or unsupported result claims. Approved feedback can be managed from the admin panel.</p></div></div></section>
-    {faqs.length?<section className="section"><div className="container-site grid gap-14 lg:grid-cols-[.75fr_1.25fr]"><div><h2 className="section-title">Questions students ask before they begin.</h2><p className="section-copy">Answers maintained through the admin panel.</p></div><FAQAccordion items={faqs}/></div></section>:null}
+
+    <section className="reveal border-b border-[#e5e9ec] bg-white py-14 md:py-18">
+      <div className="container-site">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#dfe5e9] pb-5">
+          <div><h2 className="brand-serif text-3xl font-bold tracking-[-.035em] text-[#0b1f3a] md:text-4xl">Latest resources</h2><p className="mt-2 text-sm leading-6 text-[#607086]">Recently published study material, clearly organised by course.</p></div>
+          <Link href="/resources" className="link-arrow inline-flex items-center gap-2 text-sm font-bold text-[#0b6b42]">View all resources <ArrowRight size={17}/></Link>
+        </div>
+
+        <div>
+          {latest.length?latest.map((item,index)=><article key={item.slug} className="group grid gap-4 border-b border-[#e5e9ec] py-5 transition hover:bg-[#fbfcfc] md:grid-cols-[48px_1fr_auto] md:items-center md:px-2">
+            <span className="grid size-11 place-items-center rounded-lg bg-[#edf7f1] text-[#0b6b42]"><FileText size={21}/></span>
+            <div><p className="text-xs font-bold uppercase tracking-[.09em] text-[#0b6b42]">{item.courseCode} · {item.category}</p><h3 className="mt-1 text-base font-bold text-[#0b1f3a] md:text-lg"><Link href={`/materials/${item.slug}`}>{item.title}</Link></h3><p className="mt-1 line-clamp-1 text-sm text-[#667589]">{item.description}</p></div>
+            <Link href={`/materials/${item.slug}`} className="link-arrow inline-flex items-center gap-2 text-sm font-bold text-[#0b6b42]">View resource <ArrowRight size={16}/></Link>
+          </article>):<p className="py-12 text-sm text-[#667589]">No published resources yet.</p>}
+        </div>
+      </div>
+    </section>
+
+    <section className="reveal bg-[#f7f9f8]">
+      <div className="container-site grid md:grid-cols-2">
+        <div className="flex gap-5 border-b border-[#dfe5e2] py-12 md:border-b-0 md:border-r md:py-16 md:pr-12">
+          <span className="grid size-13 shrink-0 place-items-center rounded-full bg-[#e6f3eb] text-[#0b6b42]"><BookOpenCheck size={25}/></span>
+          <div><h2 className="brand-serif text-2xl font-bold tracking-[-.025em] text-[#0b1f3a]">Research 8613 guidance</h2><p className="mt-3 max-w-md text-sm leading-7 text-[#607086]">Understand topic selection, proposal structure, research tools and responsible academic practice.</p><Link href="/research-8613" className="link-arrow mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#0b6b42]">Explore Research 8613 <ArrowRight size={16}/></Link></div>
+        </div>
+        <div className="flex gap-5 py-12 md:py-16 md:pl-12">
+          <span className="grid size-13 shrink-0 place-items-center rounded-full bg-[#e6f3eb] text-[#0b6b42]"><GraduationCap size={25}/></span>
+          <div><h2 className="brand-serif text-2xl font-bold tracking-[-.025em] text-[#0b1f3a]">Need study help?</h2><p className="mt-3 max-w-md text-sm leading-7 text-[#607086]">Get practical support with formatting, teaching practice and presenting your work clearly.</p><Link href="/order-help" className="link-arrow mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#0b6b42]">Get study help <ArrowRight size={16}/></Link></div>
+        </div>
+      </div>
+    </section>
   </>;
 }
