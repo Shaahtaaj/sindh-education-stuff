@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { SiteChrome } from "@/components/SiteChrome";
 import { CONTACT_EMAIL, SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" data-scroll-behavior="smooth"><body><SiteChrome contactEmail={CONTACT_EMAIL}>{children}</SiteChrome></body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body><SiteChrome contactEmail={CONTACT_EMAIL}>{children}</SiteChrome><Analytics/></body></html>;
 }
