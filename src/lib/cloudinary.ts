@@ -15,22 +15,30 @@ export function isCloudinaryConfigured() {
   );
 }
 
-export function createCloudinaryUploadSignature(folder: string) {
+export function createCloudinaryUploadSignature(folder: string, deliveryType?: "private") {
   if (!isCloudinaryConfigured()) {
     throw new Error("Cloudinary credentials are not configured.");
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
+  const params = deliveryType ? { folder, timestamp, type: deliveryType } : { folder, timestamp };
   return {
     timestamp,
     folder,
     signature: cloudinary.utils.api_sign_request(
-      { folder, timestamp },
+      params,
       process.env.CLOUDINARY_API_SECRET!
     ),
     cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
     apiKey: process.env.CLOUDINARY_API_KEY!,
   };
+}
+
+export function createPrivateDownloadUrl(publicId:string,format:string){
+  if(!isCloudinaryConfigured())throw new Error("Cloudinary credentials are not configured.");
+  return cloudinary.utils.private_download_url(publicId,format,{
+    resource_type:"raw",type:"private",attachment:true,expires_at:Math.floor(Date.now()/1000)+5*60
+  });
 }
 
 export async function uploadToCloudinary(

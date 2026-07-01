@@ -9,7 +9,7 @@ import { WHATSAPP_NUMBER } from "@/lib/constants";
 
 const links = [
   ["Home", "/"], ["Assignments", "/assignments"], ["Research 8613", "/research-8613"],
-  ["Resources", "/resources"], ["Contact", "/contact"]
+  ["Resources", "/resources"], ["Customer Portal", "/portal"]
 ];
 
 export function Header() {

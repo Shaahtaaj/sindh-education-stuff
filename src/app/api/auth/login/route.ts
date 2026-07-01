@@ -19,7 +19,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await User.findOne({ email, status: "active" });
+    const user = await User.findOne({
+      email: String(email).toLowerCase().trim(),
+      status: "active",
+      role: { $in: ["super_admin", "editor", "order_manager"] },
+    });
 
     if (!user) {
       return NextResponse.json(

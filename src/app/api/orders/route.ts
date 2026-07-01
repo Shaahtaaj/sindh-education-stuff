@@ -79,7 +79,12 @@ const updateSchema = z.object({
   paymentStatus: z.enum(["unpaid", "pending", "paid", "refunded"]).optional(),
   orderStatus: z.enum(["new", "waiting_for_payment", "in_progress", "completed", "cancelled"]).optional(),
   adminNotes: z.string().max(3000).optional(),
-  price: z.number().min(0).optional()
+  price: z.number().min(0).optional(),
+  deliveryFiles: z.array(z.object({
+    name:z.string().min(1).max(200),url:z.string().url().max(1000).optional(),
+    publicId:z.string().min(1).max(500).optional(),format:z.string().max(20).optional(),
+    resourceType:z.string().max(20).optional(),deliveryType:z.string().max(20).optional()
+  }).refine(file=>Boolean(file.publicId||file.url),"Delivery file identifier is required.")).max(20).optional()
 });
 
 export async function PATCH(req: NextRequest) {
@@ -93,7 +98,22 @@ export async function PATCH(req: NextRequest) {
     : changes;
   try {
     await connectDB();
-    const updated = await Order.findByIdAndUpdate(id, normalizedChanges, { new: true, runValidators: true }).lean();
+    const current=await Order.findById(id).select("price paymentStatus").lean();
+    if(!current)return NextResponse.json({error:"Order not found."},{status:404});
+    const effectivePrice=normalizedChanges.price??(Number(current.price)||0);
+    const effectivePayment=normalizedChanges.paymentStatus??String(current.paymentStatus);
+    if((normalizedChanges.orderStatus==="in_progress"||normalizedChanges.orderStatus==="completed")&&effectivePrice>0&&effectivePayment!=="paid"){
+      return NextResponse.json({error:"Confirm payment before starting or delivering paid work."},{status:409});
+    }
+    const update:Record<string,unknown>={$set:normalizedChanges};
+    if(normalizedChanges.orderStatus){
+      const statusLabels:Record<string,string>={
+        new:"Request submitted",waiting_for_payment:"Quote sent — awaiting payment",
+        in_progress:"Work started",completed:"Work delivered",cancelled:"Request cancelled"
+      };
+      update.$push={statusHistory:{status:normalizedChanges.orderStatus,label:statusLabels[normalizedChanges.orderStatus],at:new Date()}};
+    }
+    const updated = await Order.findByIdAndUpdate(id, update, { new: true, runValidators: true }).lean();
     if (!updated) return NextResponse.json({ error: "Order not found." }, { status: 404 });
     return NextResponse.json(updated);
   } catch {

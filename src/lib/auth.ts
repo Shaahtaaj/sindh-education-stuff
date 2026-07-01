@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
 export const COOKIE_NAME = "admin_token";
+const ADMIN_ROLES = new Set(["super_admin","editor","order_manager"]);
 
 type AdminSession = {
   id: string;
@@ -23,7 +24,7 @@ export async function getSession(): Promise<AdminSession | null> {
       process.env.JWT_SECRET as string
     ) as AdminSession;
 
-    return decoded;
+    return ADMIN_ROLES.has(decoded.role) ? decoded : null;
   } catch {
     return null;
   }

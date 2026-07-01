@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null) as {
       action?: unknown;
       kind?: unknown;
+      purpose?: unknown;
     } | null;
     if (body?.action !== "signature") {
       return NextResponse.json({ error: "Invalid upload action." }, { status: 400 });
@@ -41,12 +42,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const folder = body.kind === "image"
-      ? "sindh-education-stuff/thumbnails"
-      : "sindh-education-stuff/resources";
+    const folder = body.purpose === "delivery"
+      ? "sindh-education-stuff/deliveries"
+      : body.kind === "image"
+        ? "sindh-education-stuff/thumbnails"
+        : "sindh-education-stuff/resources";
     return NextResponse.json({
-      ...createCloudinaryUploadSignature(folder),
+      ...createCloudinaryUploadSignature(folder,body.purpose==="delivery"?"private":undefined),
       resourceType: body.kind === "image" ? "image" : "raw",
+      deliveryType: body.purpose==="delivery"?"private":"upload"
     });
   }
 

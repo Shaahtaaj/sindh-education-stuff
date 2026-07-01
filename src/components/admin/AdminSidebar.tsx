@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookMarked, CalendarClock, CalendarDays, CircleDollarSign, FileText, GraduationCap, HelpCircle, LayoutDashboard, LifeBuoy, MessageSquareQuote, Newspaper, SearchCheck, Settings, ShoppingBag } from "lucide-react";
+import { BarChart3, BookMarked, CalendarClock, CalendarDays, CircleDollarSign, FileText, GraduationCap, HelpCircle, LayoutDashboard, LifeBuoy, MessageSquareQuote, Newspaper, SearchCheck, Settings, ShoppingBag, Users } from "lucide-react";
 import { Logo } from "../Logo";
 import { cn } from "@/lib/utils";
 
 const groups = [
   { label: "Overview", links: [["Dashboard","/admin/dashboard",LayoutDashboard]] },
   { label: "Academic content", links: [["Programs","/admin/programs",GraduationCap],["Courses","/admin/courses",BookMarked],["Semesters","/admin/semesters",CalendarClock],["Materials","/admin/materials",FileText],["Blog Posts","/admin/blog-posts",Newspaper],["Assignment Dates","/admin/assignment-dates",CalendarDays]] },
-  { label: "Operations", links: [["Orders","/admin/orders",ShoppingBag],["Payments","/admin/payments",CircleDollarSign],["FAQs","/admin/faqs",HelpCircle],["Testimonials","/admin/testimonials",MessageSquareQuote]] },
+  { label: "Operations", links: [["Customers","/admin/customers",Users],["Orders","/admin/orders",ShoppingBag],["Payments","/admin/payments",CircleDollarSign],["FAQs","/admin/faqs",HelpCircle],["Testimonials","/admin/testimonials",MessageSquareQuote]] },
   { label: "Configuration", links: [["Website Settings","/admin/website-settings",Settings],["SEO Settings","/admin/seo-settings",SearchCheck],["AdSense Settings","/admin/adsense-settings",BarChart3]] }
 ] as const;
 

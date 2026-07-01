@@ -7,7 +7,7 @@ import { Bell, ChevronDown, ExternalLink, LogOut, Menu, Search, X } from "lucide
 const destinations = [
   ["Dashboard","/admin/dashboard"],["Programs","/admin/programs"],["Courses","/admin/courses"],
   ["Semesters","/admin/semesters"],["Materials","/admin/materials"],["Blog posts","/admin/blog-posts"],["Assignment dates","/admin/assignment-dates"],
-  ["Orders","/admin/orders"],["Payments","/admin/payments"],["FAQs","/admin/faqs"],
+  ["Customers","/admin/customers"],["Orders","/admin/orders"],["Payments","/admin/payments"],["FAQs","/admin/faqs"],
   ["Testimonials","/admin/testimonials"],["Website settings","/admin/website-settings"],
   ["SEO settings","/admin/seo-settings"],["AdSense settings","/admin/adsense-settings"]
 ] as const;
