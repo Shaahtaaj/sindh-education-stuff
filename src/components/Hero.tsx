@@ -1,16 +1,97 @@
-import { Search } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Check,
+  Clock3,
+  FileText,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 
 export function Hero() {
-  return <section className="hero-surface overflow-hidden border-b border-[#e5e9ec]">
-    <div className="container-site flex min-h-[500px] items-center py-16 lg:py-20">
-      <div className="reveal max-w-4xl">
-        <h1 className="brand-serif text-[clamp(2.65rem,6.2vw,5.8rem)] font-bold leading-[.96] tracking-[-.045em] text-[#0b1f3a]">Clear study resources.<br/><span className="text-[#0b6b42]">Better learning.</span></h1>
-        <p className="mt-7 max-w-2xl text-[clamp(1rem,1.4vw,1.16rem)] leading-8 text-[#526277]">Practical assignments, research guidance and teaching resources for distance-learning students.</p>
-        <form action="/search" className="mt-9 flex max-w-2xl flex-col gap-3 sm:flex-row">
-          <label className="focus-within:ring-3 focus-within:ring-[#0b6b42]/15 flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-[#d8e0e5] bg-white px-4 shadow-[0_4px_18px_rgba(11,31,58,.04)]"><Search size={19} className="shrink-0 text-[#7b8999]"/><span className="sr-only">Search resources</span><input name="q" placeholder="Search assignments, guides and resources…" className="h-13 min-w-0 flex-1 bg-transparent text-sm text-[#0b1f3a] outline-none placeholder:text-[#8794a3]"/></label>
-          <button className="focus-ring rounded-lg bg-[#0b6b42] px-6 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#075332] active:translate-y-0">Find resources</button>
-        </form>
+  return (
+    <section className="home-hero">
+      <div className="container-site home-hero-grid">
+        <div className="home-hero-copy reveal">
+          <h1>
+            Clear study resources.
+            <br />
+            <span>Better learning.</span>
+          </h1>
+          <p>
+            Practical assignments, research guidance and teaching resources for
+            distance-learning students.
+          </p>
+          <form action="/search" className="home-search">
+            <label>
+              <Search size={20} />
+              <span className="sr-only">Search resources</span>
+              <input
+                name="q"
+                placeholder="Search assignments, guides and resources…"
+              />
+            </label>
+            <button>
+              Find resources <ArrowRight size={17} />
+            </button>
+          </form>
+          <div className="home-trust-row">
+            <span>
+              <Check size={15} /> Clearly organised
+            </span>
+            <span>
+              <ShieldCheck size={15} /> Responsible support
+            </span>
+          </div>
+        </div>
+
+        <div className="home-workspace-preview reveal reveal-delay" aria-label="Customer portal preview">
+          <div className="home-preview-top">
+            <div>
+              <p>Customer workspace</p>
+              <strong>Everything in one place</strong>
+            </div>
+            <span>Secure</span>
+          </div>
+          <div className="home-preview-request">
+            <div className="home-preview-request-title">
+              <span>
+                <FileText size={19} />
+              </span>
+              <div>
+                <strong>Assignment guidance</strong>
+                <p>Course 8613 · Request SES-0001</p>
+              </div>
+              <em>In progress</em>
+            </div>
+            <div className="home-preview-progress">
+              {[1, 2, 3, 4].map((step) => (
+                <span key={step} className={step <= 2 ? "is-done" : ""}>
+                  {step < 2 ? <Check size={13} /> : step}
+                </span>
+              ))}
+            </div>
+            <div className="home-preview-labels">
+              <span>Received</span>
+              <span>In progress</span>
+              <span>Payment</span>
+              <span>Delivered</span>
+            </div>
+          </div>
+          <div className="home-preview-bottom">
+            <div>
+              <Clock3 size={17} />
+              <span>
+                <strong>Live updates</strong>
+                Request progress stays visible
+              </span>
+            </div>
+            <Link href="/portal">
+              Open portal <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>;
+    </section>
+  );
 }

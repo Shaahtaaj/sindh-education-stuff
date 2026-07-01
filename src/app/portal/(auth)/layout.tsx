@@ -1,7 +1,42 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2, LockKeyhole } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
-export default function PortalAuthLayout({children}:{children:React.ReactNode}){
-  return <div className="min-h-screen bg-[#f5f7f6] p-4 md:p-8"><div className="mx-auto flex max-w-6xl items-center justify-between"><Logo/><Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#526277] hover:text-[#0b6b42]"><ArrowLeft size={16}/>Back to website</Link></div><div className="mx-auto grid min-h-[calc(100vh-100px)] max-w-6xl place-items-center py-10">{children}</div></div>;
+export default function PortalAuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="portal-auth-shell">
+      <aside className="portal-auth-story">
+        <Logo inverse />
+        <div className="portal-auth-copy">
+          <p>One organised workspace</p>
+          <h2>From request to delivery, everything stays in one place.</h2>
+          <ul>
+            <li>
+              <CheckCircle2 size={19} /> Track every request clearly
+            </li>
+            <li>
+              <CheckCircle2 size={19} /> Review quotations and payment status
+            </li>
+            <li>
+              <CheckCircle2 size={19} /> Download private delivery files
+            </li>
+          </ul>
+        </div>
+        <p className="portal-auth-secure">
+          <LockKeyhole size={16} /> Private customer workspace
+        </p>
+      </aside>
+      <main className="portal-auth-main">
+        <Link href="/" className="portal-back-link portal-auth-back">
+          <ArrowLeft size={16} />
+          Back to website
+        </Link>
+        <div className="portal-auth-card-wrap">{children}</div>
+      </main>
+    </div>
+  );
 }
