@@ -45,9 +45,10 @@ export function PaymentProofForm({order}:{order:PaymentDetails}){
 
   async function submit(event:React.FormEvent<HTMLFormElement>){
     event.preventDefault();
+    const form=event.currentTarget;
     setLoading(true);
     setError("");
-    const data=new FormData(event.currentTarget);
+    const data=new FormData(form);
     try{
       const response=await fetch(`/api/portal/requests/${order.id}/payment`,{
         method:"POST",
@@ -55,7 +56,7 @@ export function PaymentProofForm({order}:{order:PaymentDetails}){
       });
       const body=await response.json();
       if(!response.ok)throw new Error(body.error??"Unable to submit payment proof.");
-      event.currentTarget.reset();
+      form.reset();
       router.refresh();
     }catch(problem){
       setError(problem instanceof Error?problem.message:"Unable to submit payment proof.");
