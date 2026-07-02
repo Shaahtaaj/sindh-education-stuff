@@ -80,6 +80,11 @@ const updateSchema = z.object({
   orderStatus: z.enum(["new", "waiting_for_payment", "in_progress", "completed", "cancelled"]).optional(),
   adminNotes: z.string().max(3000).optional(),
   price: z.number().min(0).optional(),
+  paymentMethod:z.string().trim().max(60).optional(),
+  paymentAccountTitle:z.string().trim().max(120).optional(),
+  paymentAccountNumber:z.string().trim().max(120).optional(),
+  paymentInstructions:z.string().trim().max(1000).optional(),
+  paymentRejectionReason:z.string().trim().max(500).optional(),
   deliveryFiles: z.array(z.object({
     name:z.string().min(1).max(200),url:z.string().url().max(1000).optional(),
     publicId:z.string().min(1).max(500).optional(),format:z.string().max(20).optional(),
@@ -93,15 +98,28 @@ export async function PATCH(req: NextRequest) {
   const parsed = updateSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid order update." }, { status: 400 });
   const { id, ...changes } = parsed.data;
-  const normalizedChanges = changes.paymentStatus === "paid" && !changes.orderStatus
-    ? { ...changes, orderStatus: "in_progress" as const }
+  const normalizedChanges = changes.paymentStatus === "paid"
+    ? {
+        ...changes,
+        orderStatus: changes.orderStatus??"in_progress" as const,
+        paymentVerifiedAt:new Date(),
+        paymentRejectionReason:""
+      }
     : changes;
   try {
     await connectDB();
-    const current=await Order.findById(id).select("price paymentStatus").lean();
+    const current=await Order.findById(id).select("price paymentStatus paymentMethod paymentAccountTitle paymentAccountNumber").lean();
     if(!current)return NextResponse.json({error:"Order not found."},{status:404});
     const effectivePrice=normalizedChanges.price??(Number(current.price)||0);
     const effectivePayment=normalizedChanges.paymentStatus??String(current.paymentStatus);
+    const effectiveMethod=normalizedChanges.paymentMethod??String(current.paymentMethod??"");
+    const effectiveTitle=normalizedChanges.paymentAccountTitle??String(current.paymentAccountTitle??"");
+    const effectiveAccount=normalizedChanges.paymentAccountNumber??String(current.paymentAccountNumber??"");
+    if(normalizedChanges.orderStatus==="waiting_for_payment"&&(
+      effectivePrice<=0||!effectiveMethod||!effectiveTitle||!effectiveAccount
+    )){
+      return NextResponse.json({error:"Enter the price and complete payment account details before sending the quotation."},{status:409});
+    }
     if((normalizedChanges.orderStatus==="in_progress"||normalizedChanges.orderStatus==="completed")&&effectivePrice>0&&effectivePayment!=="paid"){
       return NextResponse.json({error:"Confirm payment before starting or delivering paid work."},{status:409});
     }

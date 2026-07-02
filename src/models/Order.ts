@@ -11,6 +11,16 @@ const schema=new Schema({
   message:String,
   uploadedFileUrl:String,
   paymentScreenshotUrl:String,
+  paymentProofPublicId:String,
+  paymentProofFormat:String,
+  paymentMethod:String,
+  paymentAccountTitle:String,
+  paymentAccountNumber:String,
+  paymentInstructions:String,
+  paymentTransactionId:String,
+  paymentSubmittedAt:Date,
+  paymentVerifiedAt:Date,
+  paymentRejectionReason:String,
   deliveryFiles:[{
     name:{type:String,required:true},url:String,publicId:String,format:String,
     resourceType:{type:String,default:"raw"},deliveryType:{type:String,default:"private"}

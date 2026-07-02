@@ -8,8 +8,8 @@ import {
   Download,
   FileText,
   LockKeyhole,
-  WalletCards,
 } from "lucide-react";
+import { PaymentProofForm } from "@/components/portal/PaymentProofForm";
 import { ProgressTimeline } from "@/components/portal/ProgressTimeline";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { getCustomerOrder } from "@/lib/portal-orders";
@@ -129,31 +129,7 @@ export default async function RequestDetailsPage({
         </section>
 
         <aside className="grid content-start gap-5">
-          <section className="portal-panel portal-payment-card">
-            <div className="portal-panel-heading">
-              <div>
-                <p className="portal-overline">Quotation</p>
-                <h2>Payment</h2>
-              </div>
-              <WalletCards size={20} className="text-[#0b8f58]" />
-            </div>
-            <div className="portal-price-row">
-              <span>Total</span>
-              <strong>
-                {order.price
-                  ? `PKR ${order.price.toLocaleString()}`
-                  : "Pending quote"}
-              </strong>
-            </div>
-            <p className="portal-payment-state">
-              Status: {order.paymentStatus.replaceAll("_", " ")}
-            </p>
-            {order.price && order.paymentStatus !== "paid" ? (
-              <Link href="/contact" className="portal-primary-button w-full">
-                Proceed to payment
-              </Link>
-            ) : null}
-          </section>
+          <PaymentProofForm order={order}/>
 
           <section className="portal-panel portal-delivery-card">
             <div className="portal-panel-heading">

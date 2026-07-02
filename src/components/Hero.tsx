@@ -1,94 +1,137 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpenCheck,
   Check,
-  Clock3,
+  FileCheck2,
   FileText,
   Search,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="home-hero">
-      <div className="container-site home-hero-grid">
-        <div className="home-hero-copy reveal">
+    <section className="premium-hero">
+      <div className="premium-hero-glow" aria-hidden="true" />
+      <div className="container-site premium-hero-grid">
+        <div className="premium-hero-copy reveal">
           <h1>
-            Clear study resources.
+            Study with clarity.
             <br />
-            <span>Better learning.</span>
+            <span>Move forward with confidence.</span>
           </h1>
           <p>
-            Practical assignments, research guidance and teaching resources for
-            distance-learning students.
+            Find organised AIOU resources, practical research guidance and
+            personalised study support—all in one dependable place.
           </p>
-          <form action="/search" className="home-search">
+
+          <form action="/search" className="premium-search">
             <label>
               <Search size={20} />
               <span className="sr-only">Search resources</span>
               <input
                 name="q"
-                placeholder="Search assignments, guides and resources…"
+                placeholder="Search by course, assignment or topic…"
               />
             </label>
             <button>
-              Find resources <ArrowRight size={17} />
+              Search resources <ArrowRight size={17} />
             </button>
           </form>
-          <div className="home-trust-row">
+
+          <div className="premium-hero-actions">
+            <Link href="/assignments">
+              Browse assignments <ArrowRight size={15} />
+            </Link>
+            <Link href="/portal">Open customer portal</Link>
+          </div>
+
+          <div className="premium-trust">
             <span>
-              <Check size={15} /> Clearly organised
+              <ShieldCheck size={15} /> Responsible academic support
             </span>
             <span>
-              <ShieldCheck size={15} /> Responsible support
+              <Check size={15} /> Clearly organised by course
             </span>
           </div>
         </div>
 
-        <div className="home-workspace-preview reveal reveal-delay" aria-label="Customer portal preview">
-          <div className="home-preview-top">
-            <div>
-              <p>Customer workspace</p>
-              <strong>Everything in one place</strong>
+        <div className="premium-hero-visual reveal reveal-delay">
+          <div className="premium-visual-orbit orbit-one" aria-hidden="true" />
+          <div className="premium-visual-orbit orbit-two" aria-hidden="true" />
+
+          <div className="premium-workspace">
+            <div className="premium-workspace-head">
+              <div>
+                <span>
+                  <Sparkles size={14} /> Your study workspace
+                </span>
+                <h2>Simple, focused, organised.</h2>
+              </div>
+              <span className="premium-live-dot">Secure</span>
             </div>
-            <span>Secure</span>
-          </div>
-          <div className="home-preview-request">
-            <div className="home-preview-request-title">
+
+            <div className="premium-resource-row">
               <span>
-                <FileText size={19} />
+                <BookOpenCheck size={20} />
               </span>
               <div>
-                <strong>Assignment guidance</strong>
-                <p>Course 8613 · Request SES-0001</p>
+                <p>Research guidance</p>
+                <strong>Course 8613</strong>
               </div>
-              <em>In progress</em>
+              <Link href="/research-8613">
+                Open <ArrowRight size={15} />
+              </Link>
             </div>
-            <div className="home-preview-progress">
-              {[1, 2, 3, 4].map((step) => (
-                <span key={step} className={step <= 2 ? "is-done" : ""}>
-                  {step < 2 ? <Check size={13} /> : step}
+
+            <div className="premium-resource-row">
+              <span>
+                <FileText size={20} />
+              </span>
+              <div>
+                <p>Latest materials</p>
+                <strong>Assignments &amp; notes</strong>
+              </div>
+              <Link href="/resources">
+                Browse <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <div className="premium-request-card">
+              <div>
+                <span>
+                  <FileCheck2 size={18} />
                 </span>
-              ))}
-            </div>
-            <div className="home-preview-labels">
-              <span>Received</span>
-              <span>In progress</span>
-              <span>Payment</span>
-              <span>Delivered</span>
+                <div>
+                  <p>Customer request</p>
+                  <strong>Progress stays visible</strong>
+                </div>
+              </div>
+              <div className="premium-request-track">
+                <span className="is-done"><Check size={12} /></span>
+                <i />
+                <span className="is-done">2</span>
+                <i />
+                <span>3</span>
+                <i />
+                <span>4</span>
+              </div>
+              <div className="premium-request-labels">
+                <span>Received</span>
+                <span>In progress</span>
+                <span>Payment</span>
+                <span>Delivered</span>
+              </div>
             </div>
           </div>
-          <div className="home-preview-bottom">
+
+          <div className="premium-float-card">
+            <span><Check size={15} /></span>
             <div>
-              <Clock3 size={17} />
-              <span>
-                <strong>Live updates</strong>
-                Request progress stays visible
-              </span>
+              <strong>Private delivery</strong>
+              <p>Your files stay in your account</p>
             </div>
-            <Link href="/portal">
-              Open portal <ArrowRight size={16} />
-            </Link>
           </div>
         </div>
       </div>

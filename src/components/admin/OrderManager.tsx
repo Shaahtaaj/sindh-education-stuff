@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays, Check, ChevronDown, Download, ExternalLink, FileText,
-  Image as ImageIcon, Mail, MessageCircle, RefreshCw, Search, ShoppingBag, UploadCloud, X
+  Image as ImageIcon, Mail, MessageCircle, RefreshCw, Search, Send, ShoppingBag, UploadCloud, X
 } from "lucide-react";
 
 type Order = {
   _id: string; studentName: string; phone: string; email?: string; program: string;
   courseCode: string; serviceType: string; deadline: string; message: string;
   uploadedFileUrl?: string; paymentScreenshotUrl?: string; price?: number;
+  paymentProofPublicId?:string;paymentMethod?:string;paymentAccountTitle?:string;
+  paymentAccountNumber?:string;paymentInstructions?:string;paymentTransactionId?:string;
+  paymentSubmittedAt?:string;paymentVerifiedAt?:string;paymentRejectionReason?:string;
   deliveryFiles?: {name:string;url?:string;publicId?:string;format?:string;resourceType?:string;deliveryType?:string}[];
   paymentStatus: "unpaid"|"pending"|"paid"|"refunded";
   orderStatus: "new"|"waiting_for_payment"|"in_progress"|"completed"|"cancelled";
@@ -17,7 +20,6 @@ type Order = {
 };
 
 const orderStatuses = ["new","waiting_for_payment","in_progress","completed","cancelled"];
-const paymentStatuses = ["unpaid","pending","paid","refunded"];
 const labels: Record<string,string> = {
   new:"New",waiting_for_payment:"Waiting for payment",in_progress:"In progress",
   completed:"Completed",cancelled:"Cancelled",unpaid:"Unpaid",pending:"Pending",
@@ -82,6 +84,38 @@ export function OrderManager() {
     }catch(problem){setError(problem instanceof Error?problem.message:"Unable to deliver files.")}finally{setSaving(false)}
   }
 
+  function quotationWhatsAppUrl(order:Order){
+    const phone=order.phone.replace(/\D/g,"").replace(/^0/,"92");
+    const message=`Assalam-o-Alaikum ${order.studentName}, your request #${order._id.slice(-8).toUpperCase()} has been reviewed. The quoted amount is PKR ${Number(order.price||0).toLocaleString()}. Please log in to your customer portal to view payment instructions and submit proof.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  }
+
+  async function sendQuotation(){
+    if(!selected)return;
+    await update({
+      price:Number(selected.price)||0,
+      paymentMethod:selected.paymentMethod||"",
+      paymentAccountTitle:selected.paymentAccountTitle||"",
+      paymentAccountNumber:selected.paymentAccountNumber||"",
+      paymentInstructions:selected.paymentInstructions||"",
+      paymentStatus:"unpaid",
+      orderStatus:"waiting_for_payment",
+      paymentRejectionReason:""
+    });
+  }
+
+  async function rejectPaymentProof(){
+    if(!selected?.paymentRejectionReason?.trim()){
+      setError("Enter a reason before rejecting the payment proof.");
+      return;
+    }
+    await update({
+      paymentStatus:"unpaid",
+      orderStatus:"waiting_for_payment",
+      paymentRejectionReason:selected.paymentRejectionReason.trim()
+    });
+  }
+
   return <>
     <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs font-extrabold uppercase tracking-[.14em] text-[#147a4b]">Student support</p><h1 className="mt-2 text-3xl font-extrabold tracking-[-.045em] text-[#0b1f3a] md:text-4xl">Orders</h1><p className="mt-2 text-sm leading-6 text-[#607086]">Review requests, open student attachments and manage payment and delivery progress.</p></div><button onClick={()=>void load()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-[#d7e0e7] bg-white px-4 py-3 text-sm font-bold text-[#405169] hover:bg-[#f4f7f9]"><RefreshCw size={17} className={loading?"animate-spin":""}/>Refresh orders</button></div>
 
@@ -99,9 +133,24 @@ export function OrderManager() {
 
     {selected?<div className="fixed inset-0 z-[60] flex justify-end bg-[#071426]/55 backdrop-blur-[2px]" onMouseDown={event=>{if(event.target===event.currentTarget&&!saving)setSelected(null)}}><aside className="h-full w-full max-w-[660px] overflow-y-auto bg-[#f4f7f9] shadow-[-24px_0_70px_rgba(3,15,30,.24)]"><header className="sticky top-0 z-10 flex items-center justify-between border-b border-[#dfe6ec] bg-white px-6 py-5"><div><p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#147a4b]">Order #{selected._id.slice(0,8).toUpperCase()}</p><h2 className="mt-1 text-xl font-extrabold text-[#0b1f3a]">{selected.studentName}</h2></div><button onClick={()=>setSelected(null)} className="grid size-10 place-items-center rounded-xl border border-[#dfe6ec]"><X size={18}/></button></header><div className="space-y-5 p-5 md:p-6">
       <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5"><h3 className="text-sm font-extrabold text-[#0b1f3a]">Student and request</h3><div className="mt-4 grid gap-4 sm:grid-cols-2">{[[MessageCircle,selected.phone],[Mail,selected.email||"No email"],[CalendarDays,new Intl.DateTimeFormat("en-PK",{dateStyle:"medium"}).format(new Date(selected.deadline))],[FileText,`${selected.courseCode} · ${selected.program}`]].map(([Icon,text])=>{const I=Icon as typeof Mail;return <div key={text as string} className="flex items-center gap-3 text-sm text-[#53657a]"><I size={16} className="text-[#147a4b]"/>{text as string}</div>})}</div><p className="mt-5 rounded-xl bg-[#f4f7f9] p-4 text-sm leading-6 text-[#405169]">{selected.message}</p></section>
-      <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5"><h3 className="text-sm font-extrabold text-[#0b1f3a]">Attached files</h3><div className="mt-4 grid gap-3 sm:grid-cols-2">{selected.uploadedFileUrl?<a href={selected.uploadedFileUrl} target="_blank" className="flex items-center gap-3 rounded-xl border border-[#d7e0e7] p-4 hover:bg-[#f8fafb]"><span className="grid size-10 place-items-center rounded-xl bg-[#eaf2fb] text-[#276a9d]"><FileText size={18}/></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-[#0b1f3a]">Student file</span><span className="text-xs text-[#718094]">Open or download</span></span><ExternalLink size={15}/></a>:null}{selected.paymentScreenshotUrl?<a href={selected.paymentScreenshotUrl} target="_blank" className="flex items-center gap-3 rounded-xl border border-[#d7e0e7] p-4 hover:bg-[#f8fafb]"><span className="grid size-10 place-items-center rounded-xl bg-[#eaf6ef] text-[#147a4b]"><ImageIcon size={18}/></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-[#0b1f3a]">Payment screenshot</span><span className="text-xs text-[#718094]">Open image</span></span><ExternalLink size={15}/></a>:null}{!selected.uploadedFileUrl&&!selected.paymentScreenshotUrl?<p className="text-sm text-[#718094]">No files were attached to this order.</p>:null}</div></section>
+      <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5"><h3 className="text-sm font-extrabold text-[#0b1f3a]">Attached files</h3><div className="mt-4 grid gap-3 sm:grid-cols-2">{selected.uploadedFileUrl?<a href={selected.uploadedFileUrl} target="_blank" className="flex items-center gap-3 rounded-xl border border-[#d7e0e7] p-4 hover:bg-[#f8fafb]"><span className="grid size-10 place-items-center rounded-xl bg-[#eaf2fb] text-[#276a9d]"><FileText size={18}/></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-[#0b1f3a]">Student file</span><span className="text-xs text-[#718094]">Open or download</span></span><ExternalLink size={15}/></a>:null}{selected.paymentProofPublicId||selected.paymentScreenshotUrl?<a href={`/api/admin/orders/${selected._id}/payment-proof`} target="_blank" className="flex items-center gap-3 rounded-xl border border-[#d7e0e7] p-4 hover:bg-[#f8fafb]"><span className="grid size-10 place-items-center rounded-xl bg-[#eaf6ef] text-[#147a4b]"><ImageIcon size={18}/></span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-[#0b1f3a]">Payment proof</span><span className="text-xs text-[#718094]">{selected.paymentTransactionId||"Open private image"}</span></span><ExternalLink size={15}/></a>:null}{!selected.uploadedFileUrl&&!selected.paymentProofPublicId&&!selected.paymentScreenshotUrl?<p className="text-sm text-[#718094]">No files were attached to this order.</p>:null}</div></section>
       <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5"><h3 className="text-sm font-extrabold text-[#0b1f3a]">Deliver to customer portal</h3><p className="mt-1 text-xs leading-5 text-[#718094]">Upload completed files. Publishing them marks this request as delivered.</p>{selected.deliveryFiles?.length?<div className="mt-4 grid gap-2">{selected.deliveryFiles.map((file,index)=><div key={`${file.publicId??file.url}-${index}`} className="flex items-center gap-2 rounded-xl bg-[#f4f7f9] px-3 py-2 text-sm font-bold text-[#405169]"><Download size={16}/>{file.name}</div>)}</div>:null}<label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#cfd9e1] bg-[#f8fafb] px-4 py-5 text-sm font-bold text-[#53657a] hover:border-[#92bda3]"><UploadCloud size={19}/>Choose delivery files<input type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="hidden" onChange={event=>setDeliveryUploads(Array.from(event.target.files??[]))}/></label>{deliveryUploads.length?<p className="mt-3 text-xs font-semibold text-[#147a4b]">{deliveryUploads.length} file(s) ready to publish</p>:null}<button disabled={saving||!deliveryUploads.length} onClick={()=>void deliver()} className="mt-4 w-full rounded-xl bg-[#0b1f3a] px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{saving?"Uploading…":"Publish delivery"}</button></section>
-      <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5"><h3 className="text-sm font-extrabold text-[#0b1f3a]">Payment and progress</h3><p className="mt-1 text-xs leading-5 text-[#718094]">Enter the final agreed amount before confirming payment. Paid orders automatically move to In progress and appear in Payments.</p><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Agreed price (PKR)<input type="number" min="0" className={inputClass} value={selected.price||0} onChange={event=>setSelected({...selected,price:Number(event.target.value)})}/></label><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Payment status<select className={inputClass} value={selected.paymentStatus} onChange={event=>{const status=event.target.value as Order["paymentStatus"];if(status==="paid"&&Number(selected.price)<=0){setError("Enter the agreed price before marking this order as paid.");return}void update({paymentStatus:status,price:Number(selected.price)||0})}}>{paymentStatuses.map(status=><option key={status} value={status}>{labels[status]}</option>)}</select></label><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086] sm:col-span-2">Order status<select className={inputClass} value={selected.orderStatus} onChange={event=>void update({orderStatus:event.target.value as Order["orderStatus"]})}>{orderStatuses.map(status=><option key={status} value={status}>{labels[status]}</option>)}</select></label><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086] sm:col-span-2">Admin notes<textarea className={inputClass} rows={5} value={selected.adminNotes||""} onChange={event=>setSelected({...selected,adminNotes:event.target.value})}/></label><button disabled={saving} onClick={()=>void update({adminNotes:selected.adminNotes||"",price:Number(selected.price)||0})} className="rounded-xl bg-[#147a4b] px-5 py-3 text-sm font-bold text-white sm:col-span-2">{saving?"Saving…":"Save price and notes"}</button></div></section>
+      <section className="rounded-2xl border border-[#dfe6ec] bg-white p-5">
+        <div className="flex items-start justify-between gap-4"><div><h3 className="text-sm font-extrabold text-[#0b1f3a]">Quotation and payment</h3><p className="mt-1 text-xs leading-5 text-[#718094]">Enter payment details, send the quotation, then verify the customer&apos;s proof after checking your receiving account.</p></div><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${selected.paymentStatus==="paid"?"bg-[#eaf6ef] text-[#147a4b]":selected.paymentStatus==="pending"?"bg-[#fff4e5] text-[#9a5b19]":"bg-[#f1f3f6] text-[#53657a]"}`}>{labels[selected.paymentStatus]}</span></div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Agreed price (PKR)<input type="number" min="1" className={inputClass} value={selected.price||0} onChange={event=>setSelected({...selected,price:Number(event.target.value)})}/></label>
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Payment method<select className={inputClass} value={selected.paymentMethod||""} onChange={event=>setSelected({...selected,paymentMethod:event.target.value})}><option value="">Select method</option><option>Raast</option><option>Bank transfer</option><option>JazzCash</option><option>Easypaisa</option><option>Other</option></select></label>
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Account title<input className={inputClass} value={selected.paymentAccountTitle||""} onChange={event=>setSelected({...selected,paymentAccountTitle:event.target.value})} placeholder="Account holder or business name"/></label>
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Account / Raast ID<input className={inputClass} value={selected.paymentAccountNumber||""} onChange={event=>setSelected({...selected,paymentAccountNumber:event.target.value})} placeholder="IBAN, mobile number or wallet ID"/></label>
+          <label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086] sm:col-span-2">Customer payment instructions<textarea className={inputClass} rows={3} value={selected.paymentInstructions||""} onChange={event=>setSelected({...selected,paymentInstructions:event.target.value})} placeholder="Example: Pay the exact amount and use the request reference in your transfer notes."/></label>
+          <button disabled={saving} onClick={()=>void sendQuotation()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#147a4b] px-5 py-3 text-sm font-bold text-white sm:col-span-2"><Send size={16}/>{saving?"Saving…":"Send quotation and request payment"}</button>
+          {selected.orderStatus==="waiting_for_payment"&&selected.price?<a href={quotationWhatsAppUrl(selected)} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#b9dfc8] bg-[#eaf6ef] px-5 py-3 text-sm font-bold text-[#147a4b] sm:col-span-2"><MessageCircle size={17}/>Notify customer on WhatsApp</a>:null}
+        </div>
+
+        {selected.paymentStatus==="pending"?<div className="mt-5 rounded-xl border border-[#f0d6a5] bg-[#fff9ed] p-4"><p className="text-xs font-extrabold uppercase tracking-[.07em] text-[#9a5b19]">Proof awaiting verification</p><p className="mt-2 text-sm font-bold text-[#405169]">Transaction ID: {selected.paymentTransactionId||"Not provided"}</p>{selected.paymentSubmittedAt?<p className="mt-1 text-xs text-[#718094]">Submitted {new Intl.DateTimeFormat("en-PK",{dateStyle:"medium",timeStyle:"short"}).format(new Date(selected.paymentSubmittedAt))}</p>:null}<div className="mt-4 grid gap-3 sm:grid-cols-2"><a href={`/api/admin/orders/${selected._id}/payment-proof`} target="_blank" className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d7e0e7] bg-white px-4 py-3 text-xs font-bold text-[#405169]"><ExternalLink size={15}/>Open private proof</a><button disabled={saving} onClick={()=>void update({paymentStatus:"paid",price:Number(selected.price)||0})} className="rounded-xl bg-[#147a4b] px-4 py-3 text-xs font-bold text-white">Verify payment</button></div><label className="mt-4 grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086]">Rejection reason<textarea className={inputClass} rows={2} value={selected.paymentRejectionReason||""} onChange={event=>setSelected({...selected,paymentRejectionReason:event.target.value})} placeholder="Explain what the customer should correct."/></label><button disabled={saving} onClick={()=>void rejectPaymentProof()} className="mt-3 w-full rounded-xl border border-red-200 bg-white px-4 py-3 text-xs font-bold text-red-700">Reject proof and request correction</button></div>:null}
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086] sm:col-span-2">Order status<select className={inputClass} value={selected.orderStatus} onChange={event=>void update({orderStatus:event.target.value as Order["orderStatus"]})}>{orderStatuses.map(status=><option key={status} value={status}>{labels[status]}</option>)}</select></label><label className="grid gap-2 text-xs font-bold uppercase tracking-[.06em] text-[#607086] sm:col-span-2">Admin notes<textarea className={inputClass} rows={4} value={selected.adminNotes||""} onChange={event=>setSelected({...selected,adminNotes:event.target.value})}/></label><button disabled={saving} onClick={()=>void update({adminNotes:selected.adminNotes||""})} className="rounded-xl bg-[#0b1f3a] px-5 py-3 text-sm font-bold text-white sm:col-span-2">{saving?"Saving…":"Save admin notes"}</button></div>
+      </section>
     </div></aside></div>:null}
     {notice?<div className="fixed bottom-5 right-5 z-[80] flex items-center gap-2 rounded-xl bg-[#0b1f3a] px-4 py-3 text-sm font-bold text-white shadow-xl"><Check size={17} className="text-[#55d393]"/>{notice}<button onClick={()=>setNotice("")}><X size={15}/></button></div>:null}
   </>;

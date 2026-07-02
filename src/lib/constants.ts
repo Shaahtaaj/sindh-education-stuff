@@ -1,6 +1,7 @@
 export const SITE_NAME = "Sindh Education Stuff";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923001234567";
+export const WHATSAPP_NUMBER = "923173949424";
+export const CONTACT_PHONE = `+${WHATSAPP_NUMBER}`;
 export const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? "hello@sindheducationstuff.com";
 export const DISCLAIMER = "Sindh Education Stuff is an independent educational support platform. We are not officially affiliated with Allama Iqbal Open University or any government institution. All materials are provided for learning, reference, guidance, formatting, and academic support only. Students should prepare and submit their own original work according to university rules.";
 

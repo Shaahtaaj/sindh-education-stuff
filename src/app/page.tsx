@@ -2,8 +2,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpenCheck,
+  CalendarDays,
   FileText,
   GraduationCap,
+  Lightbulb,
+  NotebookPen,
   UserRoundCheck,
 } from "lucide-react";
 import { Hero } from "@/components/Hero";
@@ -18,6 +21,29 @@ export default async function Home() {
   return (
     <>
       <Hero />
+
+      <section className="home-quick-access" aria-label="Quick access">
+        <div className="container-site">
+          {[
+            [FileText, "Assignments", "Formats and guidance", "/assignments"],
+            [BookOpenCheck, "Research 8613", "Proposal and research help", "/research-8613"],
+            [NotebookPen, "Lesson plans", "Teaching-practice formats", "/lesson-plans"],
+            [CalendarDays, "Assignment dates", "Submission schedules", "/assignment-dates"],
+          ].map(([Icon, title, text, href]) => {
+            const ItemIcon = Icon as typeof FileText;
+            return (
+              <Link href={href as string} key={title as string}>
+                <span><ItemIcon size={20} /></span>
+                <div>
+                  <strong>{title as string}</strong>
+                  <p>{text as string}</p>
+                </div>
+                <ArrowRight size={16} />
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="home-resources reveal">
         <div className="container-site">
@@ -58,9 +84,11 @@ export default async function Home() {
                 </article>
               ))
             ) : (
-              <p className="py-12 text-sm text-[#667589]">
-                No published resources yet.
-              </p>
+              <div className="home-resource-empty">
+                <span><Lightbulb size={23}/></span>
+                <div><h3>Explore study guidance</h3><p>Browse assignments, Research 8613 guidance and teaching-practice resources.</p></div>
+                <Link href="/resources">Browse all resources <ArrowRight size={16}/></Link>
+              </div>
             )}
           </div>
         </div>
